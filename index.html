@@ -372,10 +372,11 @@ h1,h2,h3{text-wrap:balance}
       <p class="sub">Выберите папку целиком — вложенные папки тоже прочитаются. Или перетащите файлы в рамку.</p>
       <div class="drop" id="drop">
         <div class="cta" style="justify-content:center">
-          <label class="btn primary">Выбрать папку<input id="pickDir" type="file" webkitdirectory directory multiple hidden></label>
+          <button class="btn primary" id="pickDirBtn" type="button">Выбрать папку</button>
           <label class="btn">Выбрать файлы<input id="pickFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label>
+          <input id="pickDir" type="file" webkitdirectory directory multiple hidden>
         </div>
-        <p class="big-i">JPEG, PNG, WebP. Файлы HEIC с айфона браузер не открывает — их придётся сначала сохранить в JPEG.</p>
+        <p class="big-i" id="pickHint">JPEG, PNG, WebP. Файлы HEIC с айфона браузер не открывает — их придётся сначала сохранить в JPEG.</p>
         <p class="note" id="dropCount">Пока ничего не выбрано</p>
       </div>
 
@@ -384,7 +385,8 @@ h1,h2,h3{text-wrap:balance}
           <div><b id="upCount">0</b> <span id="upOf"></span></div>
           <div class="up-actions">
             <label class="btn ghost">Добавить ещё<input id="pickMore2" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label>
-            <label class="btn ghost">Другая папка<input id="pickDir2" type="file" webkitdirectory directory multiple hidden></label>
+            <button class="btn ghost" id="pickDirBtn2" type="button">Другая папка</button>
+            <input id="pickDir2" type="file" webkitdirectory directory multiple hidden>
             <button class="btn ghost" id="upClear">Очистить</button>
           </div>
         </div>
@@ -545,7 +547,7 @@ const OCCASIONS={
 const state={
   screen:"s-landing",
   title:"", sub:"", occasion:"birthday", style:"tihiy", fmt:"square", target:24,
-  files:[], photos:[], byId:new Map(), pages:[], cur:0, selSlot:-1, tab:"all", draftId:null
+  files:[], photos:[], byId:new Map(), pages:[], cur:0, selSlot:-1, tab:"all", draftId:null, dirHandle:null
 };
 const S=()=>STYLES[state.style];
 const dims=()=>{const f=FORMATS[state.fmt];return{W:f.w,H:f.h,bleed:f.bleed};};
@@ -838,9 +840,60 @@ async function intake(list){
   intakeBusy=false; upCounts();
   $("upBar").style.width="100%";
 }
+/* --- выбор папки: сначала современный File System Access, иначе старый input --- */
+const FS_OK = typeof window.showDirectoryPicker==="function";
+async function walkDir(dir,out,depth){
+  depth=depth||0; if(depth>4||out.length>4000) return;
+  for await (const [name,h] of dir.entries()){
+    if(h.kind==="file"){
+      if(/\.(jpe?g|png|webp|heic|heif)$/i.test(name)){
+        try{ out.push(await h.getFile()); }catch(_){}
+      }
+    } else if(h.kind==="directory"){ await walkDir(h,out,depth+1); }
+  }
+}
+async function chooseFolder(){
+  if(!FS_OK){ $("pickDir").click(); return; }
+  let dir;
+  try{ dir=await window.showDirectoryPicker({id:"album-photos",mode:"read"}); }
+  catch(_){ return; }                     // пользователь отменил
+  const files=[];
+  try{ await walkDir(dir,files); }catch(_){}
+  if(!files.length){ toast("В папке не нашлось изображений"); return; }
+  state.dirHandle=dir;
+  if(state.draftId) idbPut(state.draftId,dir);
+  intake(files);
+}
+$("pickDirBtn").addEventListener("click",chooseFolder);
+if(FS_OK) $("pickHint").textContent=
+  "JPEG, PNG, WebP. Браузер один раз спросит разрешение на чтение выбранной папки — это его штатная проверка, файлы остаются на месте. HEIC с айфона браузер не открывает.";
+else $("pickHint").textContent=
+  "JPEG, PNG, WebP. Ваш браузер попросит подтвердить доступ ко всем файлам папки — иначе он папки не отдаёт. Ничего никуда не отправляется. HEIC с айфона браузер не открывает.";
+
+/* хранилище разрешений на папку — чтобы черновик открывался без нового выбора */
+function idb(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open("album-fs",1);
+    r.onupgradeneeded=()=>{ try{ r.result.createObjectStore("handles"); }catch(_){} };
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+  });
+}
+async function idbPut(k,v){
+  try{ const db=await idb(); await new Promise((res,rej)=>{
+    const t=db.transaction("handles","readwrite");
+    t.objectStore("handles").put(v,k); t.oncomplete=res; t.onerror=()=>rej(t.error); }); }catch(_){}
+}
+async function idbGet(k){
+  try{ const db=await idb(); return await new Promise(res=>{
+    const t=db.transaction("handles","readonly");
+    const q=t.objectStore("handles").get(k); q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }); }
+  catch(_){ return null; }
+}
+
 $("pickDir").addEventListener("change",e=>{const f=[...e.target.files];e.target.value="";intake(f);});
 $("pickFiles").addEventListener("change",e=>{const f=[...e.target.files];e.target.value="";intake(f);});
 $("pickDir2").addEventListener("change",e=>{const f=[...e.target.files];e.target.value="";intake(f);});
+$("pickDirBtn2").addEventListener("click",chooseFolder);
 $("pickMore2").addEventListener("change",e=>{const f=[...e.target.files];e.target.value="";intake(f);});
 $("upClear").addEventListener("click",()=>{
   state.photos.forEach(p=>{ try{ URL.revokeObjectURL(p.url); }catch(_){} });
@@ -1855,6 +1908,7 @@ function saveLocal(){
       const i=list.findIndex(d=>d.id===state.draftId);
       if(i>=0) list[i]=rec; else list.unshift(rec);
       draftsWrite(list.slice(0,40));
+      if(state.dirHandle) idbPut(state.draftId,state.dirHandle);
     }catch(_){}
   },1200);
 }
@@ -1894,7 +1948,7 @@ function newAlbum(){
   $("a-title").value=""; $("a-sub").value="";
   show("s-setup");
 }
-function openDraft(id){
+async function openDraft(id){
   const d=drafts().find(x=>x.id===id); if(!d) return;
   state.draftId=d.id;
   if(FORMATS[d.fmt]){ state.fmt=d.fmt; $("fmt").value=d.fmt; $("edFmt").value=d.fmt; }
@@ -1904,6 +1958,23 @@ function openDraft(id){
   let obj=null; try{ obj=JSON.parse(d.project); }catch(_){}
   if(!obj){ toast("Черновик повреждён"); return; }
   if(state.photos.length && applyProject(obj)){ show("s-editor"); toast("Черновик открыт"); return; }
+  // папка, которую уже разрешали для этого альбома
+  const h=await idbGet(d.id);
+  if(h&&h.queryPermission){
+    try{
+      let st=await h.queryPermission({mode:"read"});
+      if(st!=="granted") st=await h.requestPermission({mode:"read"});
+      if(st==="granted"){
+        const files=[]; await walkDir(h,files);
+        if(files.length){
+          state.dirHandle=h;
+          show("s-upload");
+          await intake(files);
+          if(applyProject(obj)){ show("s-editor"); toast("Черновик открыт — папка та же"); return; }
+        }
+      }
+    }catch(_){}
+  }
   window.__pendingProject=obj;
   show("s-upload");
   toast("Укажите папку с теми же снимками — вёрстка восстановится");
