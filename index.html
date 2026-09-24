@@ -253,6 +253,28 @@ h1,h2,h3{text-wrap:balance}
   background:rgba(0,0,0,.6);color:#fff;font-size:11px;line-height:19px;padding:0;cursor:pointer;opacity:0;transition:opacity .12s}
 .up-grid figure:hover button,.up-grid button:focus-visible{opacity:1}
 .up-grid .ph{width:100%;aspect-ratio:1;border-radius:5px;background:var(--panel-2);border:1px dashed var(--line)}
+.vol{margin-top:11px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);
+  font-size:13px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.vol .vh-acts{display:flex;gap:7px;flex-wrap:wrap}
+.vol .btn{padding:5px 10px;font-size:12.5px}
+
+/* сводка отбора в редакторе */
+.sum{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;font-size:11.5px}
+.sum span{padding:2px 8px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);color:var(--muted)}
+.sum span b{color:var(--ink);font-weight:600}
+
+/* мобильные вкладки редактора */
+.mtabs{display:none;gap:6px;padding:8px 16px 0}
+.mtabs .tab{flex:1;text-align:center}
+@media (max-width:768px){
+  .mtabs{display:flex}
+  .work{grid-template-columns:minmax(0,1fr)}
+  body[data-m="pages"] .stage,body[data-m="pages"] .side{display:none}
+  body[data-m="edit"] .rail,body[data-m="edit"] .side{display:none}
+  body[data-m="mat"] .rail,body[data-m="mat"] .stage{display:none}
+  .rail{flex-direction:row;overflow-x:auto;max-height:none;padding-bottom:6px}
+  .rail .thumb{min-width:104px;width:104px}
+}
 .reader canvas{max-height:100%;box-shadow:0 18px 50px rgba(0,0,0,.55);background:#fff}
 .reader .nav{display:flex;align-items:center;justify-content:center;gap:14px;padding:0 16px 16px;
   padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));color:#A8AEB6;font-size:13px}
@@ -391,6 +413,7 @@ h1,h2,h3{text-wrap:balance}
           </div>
         </div>
         <div class="track"><i id="upBar"></i></div>
+        <div class="vol" id="volHint" hidden></div>
         <div class="up-grid" id="upGrid"></div>
         <p class="note" id="upSkip"></p>
       </div>
@@ -405,7 +428,7 @@ h1,h2,h3{text-wrap:balance}
       </div>
       <div class="stat">
         <span>Страниц в альбоме: <b id="pgLabel">24</b></span>
-        <input id="npages" type="number" min="24" max="80" step="2" value="24" style="width:70px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel-2)">
+        <input id="npages" type="number" min="8" max="120" step="2" value="24" style="width:70px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel-2)">
         <span>Формат:</span>
         <select id="fmt" style="padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel-2)">
           <option value="square">21×21 см</option><option value="a4">A4 альбомный</option><option value="a5">A5 альбомный</option>
@@ -457,10 +480,21 @@ h1,h2,h3{text-wrap:balance}
     <span class="field">Формат
       <select id="edFmt"><option value="square">21×21 см</option><option value="a4">A4</option><option value="a5">A5</option></select>
     </span>
+    <span class="field">PDF
+      <select id="edDpi">
+        <option value="300">300 dpi · типография</option>
+        <option value="150">150 dpi · посмотреть</option>
+      </select>
+    </span>
     <button id="saveProj" class="btn ghost">Сохранить проект</button>
     <button id="print" class="btn primary">На печать · PDF</button>
     <button class="acct" id="acctBtn2"><span class="av" id="acctAv2">?</span></button>
   </header>
+  <div class="mtabs" id="mtabs">
+    <button class="tab" data-m="pages">Страницы</button>
+    <button class="tab on" data-m="edit">Правка</button>
+    <button class="tab" data-m="mat">Материалы</button>
+  </div>
   <main class="work">
     <nav class="rail" id="rail" aria-label="Страницы"></nav>
     <section class="stage">
@@ -478,6 +512,7 @@ h1,h2,h3{text-wrap:balance}
       <div class="card" id="insp"></div>
       <div class="card">
         <h3>Не вошли в альбом</h3>
+        <div class="sum" id="traySum"></div>
         <div class="tabs">
           <button class="tab on" data-tab="all">Все <span id="cAll">0</span></button>
           <button class="tab" data-tab="dupes">Дубли <span id="cDup">0</span></button>
@@ -790,6 +825,36 @@ function upTile(ph){
   fig.append(im,b);
   $("upGrid").appendChild(fig);
 }
+/* объём книги считается от количества кадров, а не наоборот */
+const PER_PAGE=2.4;
+function pagesForPhotos(n){
+  if(!n) return 4;
+  let p=4+Math.ceil(n/PER_PAGE);
+  if(p%2) p++;
+  return Math.max(8,Math.min(120,p));
+}
+function photosForPages(p){ return Math.max(1,Math.ceil((p-4)*PER_PAGE)); }
+function volumeHint(){
+  const box=$("volHint"); if(!box) return;
+  const n=state.photos.length;
+  if(!n||intakeBusy){ box.hidden=true; return; }
+  const can=pagesForPhotos(n), want=state.target;
+  box.hidden=false;
+  if(can>=want){
+    const extra=Math.max(0,n-photosForPages(want));
+    box.innerHTML='<span>Из '+n+' снимков соберётся книга на '+want+' стр.'+
+      (extra?' Лишние '+extra+' кадров останутся в лотке — их можно вернуть на страницы.':'')+'</span>';
+    return;
+  }
+  const need=photosForPages(want)-n;
+  box.innerHTML='<span>Из '+n+' снимков получится '+can+' страниц. Для '+want+' добавьте ещё '+need+' кадров.</span>'+
+    '<span class="vh-acts"><button class="btn ghost" id="volFit">Собрать на '+can+' страниц</button>'+
+    '<button class="btn ghost" id="volAdd">Добавить фото</button></span>';
+  $("volFit").addEventListener("click",()=>{
+    state.target=can; $("npages").value=can; $("pgLabel").textContent=can; volumeHint();
+  });
+  $("volAdd").addEventListener("click",()=>$("pickMore2").click());
+}
 function upCounts(){
   const n=state.photos.length;
   $("upCount").textContent=n;
@@ -797,6 +862,7 @@ function upCounts(){
   $("go-scan").disabled=intakeBusy||!n;
   $("go-scan").textContent=intakeBusy?"Читаю файлы…":"Собрать альбом";
   $("dropCount").textContent=n?"Можно добавить ещё — новые снимки встанут к уже прочитанным":"Пока ничего не выбрано";
+  volumeHint();
 }
 async function intake(list){
   const files=[...list].filter(f=>/\.(jpe?g|png|webp)$/i.test(f.name));
@@ -906,8 +972,8 @@ const drop=$("drop");
 ["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("hot");}));
 drop.addEventListener("drop",e=>{ if(e.dataTransfer&&e.dataTransfer.files.length) intake(e.dataTransfer.files); });
 $("npages").addEventListener("change",e=>{
-  state.target=Math.max(24,Math.min(80,+e.target.value||24));
-  e.target.value=state.target; $("pgLabel").textContent=state.target;
+  state.target=Math.max(8,Math.min(120,+e.target.value||24));
+  e.target.value=state.target; $("pgLabel").textContent=state.target; volumeHint();
 });
 $("fmt").addEventListener("change",e=>{ state.fmt=e.target.value; $("edFmt").value=e.target.value; });
 
@@ -991,30 +1057,36 @@ function analyse(bmp){
 function hamming(a,b){ let d=0; for(let i=0;i<64;i++) if(a[i]!==b[i]) d++; return d; }
 
 /* =============================== распознавание героя */
-const FACE_CDN="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/";
-const face={api:null,ready:false,loading:null,failed:false};
+/* модель живёт рядом с приложением: vendor/face-api.js и vendor/models/.
+   Внешний CDN — только запасной вариант, когда файлов рядом нет (напр. в артефакте). */
+const FACE_LOCAL="vendor/", FACE_CDN="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/";
+const face={api:null,ready:false,loading:null,failed:false,where:""};
+function loadScript(src,ms){
+  return new Promise((res,rej)=>{
+    const s=document.createElement("script");
+    s.src=src; s.onload=res; s.onerror=()=>rej(new Error("script"));
+    document.head.appendChild(s);
+    setTimeout(()=>rej(new Error("timeout")),ms||30000);
+  });
+}
 function loadFace(){
   if(face.ready) return Promise.resolve(true);
   if(face.failed) return Promise.resolve(false);
   if(face.loading) return face.loading;
   face.loading=(async()=>{
-    try{
-      if(!window.faceapi){
-        await new Promise((res,rej)=>{
-          const s=document.createElement("script");
-          s.src=FACE_CDN+"dist/face-api.js";
-          s.onload=res; s.onerror=()=>rej(new Error("script"));
-          document.head.appendChild(s);
-          setTimeout(()=>rej(new Error("timeout")),30000);
-        });
-      }
-      const api=window.faceapi; if(!api) throw new Error("no faceapi");
-      const base=FACE_CDN+"model/";
-      await api.nets.ssdMobilenetv1.loadFromUri(base);
-      await api.nets.faceLandmark68Net.loadFromUri(base);
-      await api.nets.faceRecognitionNet.loadFromUri(base);
-      face.api=api; face.ready=true; return true;
-    }catch(_){ face.failed=true; return false; }
+    const tries=[[FACE_LOCAL+"face-api.js",FACE_LOCAL+"models/","свой домен"],
+                 [FACE_CDN+"dist/face-api.js",FACE_CDN+"model/","внешний CDN"]];
+    for(const [lib,base,where] of tries){
+      try{
+        if(!window.faceapi) await loadScript(lib,25000);
+        const api=window.faceapi; if(!api) throw new Error("no faceapi");
+        await api.nets.ssdMobilenetv1.loadFromUri(base);
+        await api.nets.faceLandmark68Net.loadFromUri(base);
+        await api.nets.faceRecognitionNet.loadFromUri(base);
+        face.api=api; face.ready=true; face.where=where; return true;
+      }catch(_){ /* пробуем следующий источник */ }
+    }
+    face.failed=true; return false;
   })();
   return face.loading;
 }
@@ -1277,7 +1349,7 @@ function assemble(){
     pool=state.photos.filter(p=>!p.dup&&!p.weak).sort((a,b)=>(a.date||0)-(b.date||0));
   }
   if(!pool.length){ state.pages=[]; return; }
-  const target=Math.max(24,state.target);
+  const target=Math.max(8,state.target);   // объём идёт от числа кадров (§5.1 ТЗ)
   // cover: sharpest of the top-scoring, prefer a single-subject-ish (highest score)
   const cover=[...pool].sort((a,b)=>b.score-a.score)[0];
   const last=pool[pool.length-1];
@@ -1288,7 +1360,8 @@ function assemble(){
   const pages=[];
   pages.push({type:"cover",title:state.title||"Альбом",years:state.sub||span,slots:[cover.id],focal:[]});
   pages.push({type:"text",title:"Несколько слов",body:oc.intro,slots:[],focal:[]});
-  const nPhoto=Math.max(1,target-4);
+  // пустых страниц в макете быть не должно: полос ровно столько, на сколько хватает кадров
+  const nPhoto=Math.max(1,Math.min(target-4,mid.length));
   let i=0, prevFull=false;
   for(let p=0;p<nPhoto;p++){
     const left=nPhoto-p, rest=mid.length-i;
@@ -1410,6 +1483,12 @@ function nextFree(taken){
 }
 function trayRender(){
   const g=groups();
+  const used=usedIds().size, total=state.photos.length;
+  $("traySum").innerHTML=
+    '<span>в альбоме <b>'+used+'</b> из '+total+'</span>'+
+    '<span>дубли <b>'+state.photos.filter(p=>p.dup).length+'</b></span>'+
+    '<span>слабые <b>'+state.photos.filter(p=>p.weak&&!p.dup).length+'</b></span>'+
+    (state.heroUsed?'<span>без героя <b>'+state.photos.filter(p=>p.noHero&&!p.dup).length+'</b></span>':'');
   const all=[...g.free,...g.weak,...g.nohero,...g.dupes];
   $("cAll").textContent=all.length; $("cDup").textContent=g.dupes.length; $("cWeak").textContent=g.weak.length;
   $("cNoHero").textContent=g.nohero.length;
@@ -1496,6 +1575,7 @@ canvas.addEventListener("pointermove",e=>{
 $("rail").addEventListener("click",e=>{
   const b=e.target.closest(".thumb"); if(!b) return;
   state.cur=+b.dataset.i; state.selSlot=-1; inspector(); trayRender(); render(); updHead();
+  if(window.matchMedia("(max-width:768px)").matches) mtab("edit");
 });
 let dragI=-1;
 $("rail").addEventListener("dragstart",e=>{
@@ -1524,10 +1604,15 @@ $("delPage").addEventListener("click",()=>{
   state.pages.splice(state.cur,1); state.cur=Math.max(0,state.cur-1);
   $("rail").innerHTML=""; render(); inspector(); trayRender(); updHead(); saveLocal();
 });
+function filledPages(){
+  return state.pages.filter(p=>p.type!=="photos"||p.slots.every(Boolean)).length;
+}
 function updHead(){
   const p=state.pages[state.cur]; if(!p) return;
   $("pageTitle").textContent="Страница "+(state.cur+1)+" из "+state.pages.length;
-  $("pageHint").textContent=p.type==="cover"?"обложка":p.type==="text"?"текст":"фото · "+LAYOUT_LABEL[p.layout];
+  const fill=filledPages();
+  $("pageHint").textContent=(p.type==="cover"?"обложка":p.type==="text"?"текст":"фото · "+LAYOUT_LABEL[p.layout])+
+    " · заполнено "+fill+" из "+state.pages.length+" страниц";
   const f=FORMATS[state.fmt];
   $("stageNote").textContent="Лист "+(f.w-2*f.bleed)+"×"+(f.h-2*f.bleed)+" мм плюс вылеты "+f.bleed+" мм · экспорт 300 dpi";
 }
@@ -1657,6 +1742,15 @@ function acctDialog(tab){
   const saveAi=()=>setAiCfg({provider:$("acProv").value,model:$("acModel").value.trim(),key:$("acKey").value.trim()});
   ["acProv","acModel","acKey"].forEach(id=>$(id).addEventListener("change",saveAi));
 }
+/* мобильные вкладки редактора */
+function mtab(m){
+  document.body.dataset.m=m;
+  document.querySelectorAll("#mtabs .tab").forEach(b=>b.classList.toggle("on",b.dataset.m===m));
+  if(m==="edit") setTimeout(()=>render(),40);
+}
+document.querySelectorAll("#mtabs .tab").forEach(b=>b.addEventListener("click",()=>mtab(b.dataset.m)));
+mtab("edit");
+
 $("acctBtn").addEventListener("click",()=>acctDialog("profile"));
 $("acctBtn2").addEventListener("click",()=>acctDialog("profile"));
 $("logoHome").addEventListener("click",()=>show("s-albums"));
@@ -1818,9 +1912,18 @@ async function saveBlob(filename,blob){
   setTimeout(()=>{a.remove();URL.revokeObjectURL(u);},6000);
   return "saved";
 }
+function stamp(c,s,W,H){
+  c.save();
+  c.font=(6.4*s/2.8346).toFixed(1)+'px "IBM Plex Sans", sans-serif';
+  c.fillStyle="rgba(128,120,110,.85)"; c.textAlign="center";
+  c.fillText("Собрано в Альбом·студии · dburlaku.github.io/album-studio", W*s/2, (H-5)*s);
+  c.restore();
+}
 async function exportPdf(){
   if(!state.pages.length) return;
-  const {W,H}=dims(), s=300/25.4;
+  const dpi=parseInt(($("edDpi")||{}).value,10)||300;
+  const mark=dpi<300;
+  const {W,H}=dims(), s=dpi/25.4;
   const cv=document.createElement("canvas");
   cv.width=Math.round(W*s); cv.height=Math.round(H*s);
   const c=cv.getContext("2d");
@@ -1833,6 +1936,7 @@ async function exportPdf(){
         if(ph&&!cache.has(id)) cache.set(id,await fullImage(ph)); }
       c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,cv.width,cv.height);
       drawPage(c,p,s,ph=>cache.get(ph.id)||ph.thumb);
+      if(mark) stamp(c,s,W,H);
       cache.forEach(v=>{ if(v&&v.close) v.close(); });
       const blob=await new Promise(r=>cv.toBlob(r,"image/jpeg",0.92));
       jpegs.push({bytes:new Uint8Array(await blob.arrayBuffer()),w:cv.width,h:cv.height});
@@ -1842,7 +1946,7 @@ async function exportPdf(){
     const pdf=buildPdf(jpegs,W*72/25.4,H*72/25.4);
     const nm=(state.title||"Альбом").replace(/[\\/:*?"<>|]/g,"").trim()||"Альбом";
     progressDone();
-    await saveBlob(nm+" ("+state.pages.length+" стр.).pdf",pdf);
+    await saveBlob(nm+" ("+state.pages.length+" стр., "+dpi+" dpi).pdf",pdf);
     toast("PDF готов");
   }catch(err){
     progressDone();
