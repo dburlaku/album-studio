@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Собирает печатный фотоальбом из папки с фотографиями: отбор кадров, вёрстка, PDF под печать. Всё считается в браузере.">
+<meta name="description" content="Собирает печатный фотоальбом из папки с фотографиями: отбор кадров, вёрстка и PDF под печать. Всё собирается на вашем компьютере.">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
@@ -39,6 +39,53 @@ body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);
 button,input,select,textarea{font:inherit;color:inherit}
 h1,h2,h3{text-wrap:balance}
 .wrap{max-width:1500px;margin:0 auto;padding:0 16px}
+
+/* логотип и аккаунт */
+.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:25;background:var(--panel);border-bottom:1px solid var(--line)}
+.site .in{max-width:1500px;margin:0 auto;padding:9px 16px;display:flex;align-items:center;gap:12px}
+.logo{display:inline-flex;align-items:center;gap:9px;background:none;border:0;padding:0;cursor:pointer;color:var(--ink)}
+.logo svg{color:var(--accent);flex:none}
+.logo .wm{font-family:"PT Serif",Georgia,serif;font-size:17px;line-height:1}
+.logo .wm em{font-style:normal;font-family:"IBM Plex Sans",sans-serif;font-size:11px;color:var(--muted);
+  letter-spacing:.14em;text-transform:uppercase;margin-left:7px;vertical-align:2px}
+.acct{display:inline-flex;align-items:center;gap:8px;padding:5px 11px 5px 5px;border:1px solid var(--line);
+  border-radius:999px;background:var(--panel-2);cursor:pointer;font-size:13px}
+.acct:hover{border-color:var(--muted)}
+.acct .av{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;
+  font-size:11px;font-weight:600;flex:none}
+.modal{position:fixed;inset:0;background:rgba(8,10,13,.72);z-index:88;display:flex;align-items:flex-start;
+  justify-content:center;padding:24px 16px;overflow-y:auto}
+.modal .box{background:var(--panel);border-radius:12px;padding:20px;width:min(620px,100%);box-shadow:var(--shadow)}
+.modal h3{margin:0 0 14px;font-size:19px;font-family:"PT Serif",Georgia,serif;font-weight:400;
+  text-transform:none;letter-spacing:0;color:var(--ink)}
+.modal .pane{display:none} .modal .pane.on{display:block}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.plan{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--panel-2)}
+.plan.cur{border-color:var(--accent);background:var(--accent-soft)}
+.plan h4{margin:0 0 2px;font-size:15px}
+.plan .price{font-family:"PT Serif",Georgia,serif;font-size:22px;margin-bottom:8px}
+.plan ul{margin:0;padding-left:18px;font-size:12.5px;color:var(--muted);line-height:1.6}
+.plan .badge{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--line);color:var(--muted);margin-left:6px}
+
+/* список альбомов */
+.albums{max-width:1100px;margin:0 auto;padding-block:clamp(20px,4vw,40px)}
+.albums .head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.albums h2{font-family:"PT Serif",Georgia,serif;font-weight:400;font-size:clamp(22px,3vw,30px);margin:0}
+.albums .head p{margin:0;color:var(--muted);font-size:13.5px}
+.alb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.alb{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);
+  display:flex;flex-direction:column}
+.alb .cov{aspect-ratio:1;background:var(--panel-2);display:block;width:100%;object-fit:cover;cursor:pointer}
+.alb .cov.none{display:grid;place-items:center;color:var(--muted);font-size:12px}
+.alb .meta{padding:11px 12px;display:flex;flex-direction:column;gap:3px;flex:1}
+.alb .meta b{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alb .meta span{font-size:12px;color:var(--muted)}
+.alb .acts{display:flex;gap:6px;padding:0 12px 12px}
+.alb .acts .btn{flex:1;padding:6px 8px;font-size:12.5px}
+.alb-new{border:2px dashed var(--line);border-radius:10px;background:transparent;cursor:pointer;
+  display:grid;place-items:center;gap:6px;min-height:200px;color:var(--muted);padding:16px;text-align:center}
+.alb-new:hover{border-color:var(--accent);color:var(--ink)}
+.alb-new b{font-size:15px;display:block}
 .crash{margin:12px 16px;padding:10px 12px;border:1px solid var(--danger);border-radius:8px;
   background:var(--panel);color:var(--danger);font-size:12.5px;white-space:pre-wrap;word-break:break-word}
 
@@ -183,7 +230,29 @@ h1,h2,h3{text-wrap:balance}
 .reader .top .t{font-size:13px;color:#A8AEB6}
 .reader .top button{background:rgba(255,255,255,.1);color:#fff;border:0;border-radius:7px;padding:7px 12px;cursor:pointer}
 .reader .top button:hover{background:rgba(255,255,255,.18)}
-.reader .book{flex:1;display:flex;align-items:center;justify-content:center;gap:2px;padding:18px;min-height:0}
+.reader .book{flex:1;position:relative;display:flex;align-items:center;justify-content:center;gap:2px;padding:18px;min-height:0}
+.reader .zone{position:absolute;top:0;bottom:0;width:50%;z-index:5;border:0;background:transparent;padding:0}
+.reader .zone.l{left:0;cursor:w-resize}
+.reader .zone.r{right:0;cursor:e-resize}
+.reader .zone span{position:absolute;top:50%;transform:translateY(-50%);font-size:30px;color:#fff;opacity:0;transition:opacity .15s}
+.reader .zone.l span{left:18px} .reader .zone.r span{right:18px}
+.reader .zone:hover span{opacity:.5}
+.reader .zone[disabled]{cursor:default}
+.reader .zone[disabled]:hover span{opacity:0}
+
+/* загрузчик */
+.up{margin-top:14px}
+.up-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+.up-head b{font-size:16px}
+.up-actions{display:flex;gap:8px;flex-wrap:wrap}
+.up-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px;margin-top:12px;
+  max-height:300px;overflow-y:auto;padding-right:2px}
+.up-grid figure{margin:0;position:relative}
+.up-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:5px;display:block;background:var(--panel-2)}
+.up-grid button{position:absolute;right:3px;top:3px;width:19px;height:19px;border-radius:4px;border:0;
+  background:rgba(0,0,0,.6);color:#fff;font-size:11px;line-height:19px;padding:0;cursor:pointer;opacity:0;transition:opacity .12s}
+.up-grid figure:hover button,.up-grid button:focus-visible{opacity:1}
+.up-grid .ph{width:100%;aspect-ratio:1;border-radius:5px;background:var(--panel-2);border:1px dashed var(--line)}
 .reader canvas{max-height:100%;box-shadow:0 18px 50px rgba(0,0,0,.55);background:#fff}
 .reader .nav{display:flex;align-items:center;justify-content:center;gap:14px;padding:0 16px 16px;
   padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));color:#A8AEB6;font-size:13px}
@@ -223,6 +292,24 @@ h1,h2,h3{text-wrap:balance}
 
 <div class="app" id="app">
 
+<header class="site" id="siteHeader">
+  <div class="in">
+    <button class="logo" id="logoHome" title="На главную">
+      <svg viewBox="0 0 28 28" width="26" height="26" aria-hidden="true">
+        <rect x="2" y="5" width="11" height="18" rx="1.6" fill="currentColor" opacity=".22"></rect>
+        <rect x="15" y="5" width="11" height="18" rx="1.6" fill="currentColor" opacity=".22"></rect>
+        <rect x="4.6" y="8.2" width="5.8" height="5.8" rx="1.1" fill="currentColor"></rect>
+        <circle cx="20.5" cy="11.1" r="2.9" fill="currentColor"></circle>
+        <rect x="4.6" y="16.6" width="5.8" height="1.4" rx="0.7" fill="currentColor" opacity=".55"></rect>
+        <rect x="17.6" y="16.6" width="5.8" height="1.4" rx="0.7" fill="currentColor" opacity=".55"></rect>
+      </svg>
+      <span class="wm">Альбом<em>студия</em></span>
+    </button>
+    <span class="spacer" style="flex:1"></span>
+    <button class="acct" id="acctBtn"><span class="av" id="acctAv">?</span><span id="acctName">Аккаунт</span></button>
+  </div>
+</header>
+
 <!-- ============ 1. landing ============ -->
 <section id="s-landing">
   <div class="wrap hero">
@@ -234,13 +321,24 @@ h1,h2,h3{text-wrap:balance}
       <button class="btn primary big" id="go-create">Создать альбом</button>
       <label class="btn big">Открыть проект<input id="loadProj" type="file" accept="application/json,.json" hidden></label>
     </div>
-    <p class="fine">Снимки никуда не загружаются: всё считается на вашем компьютере, в этой вкладке.</p>
+    <p class="fine">Снимки никуда не загружаются: всё собирается на вашем компьютере, в этой вкладке.</p>
   </div>
   <div class="wrap flow">
     <div class="step"><div class="n">1</div><h3>Название и повод</h3><p>От повода зависят тексты вступления и страницы пожеланий.</p></div>
     <div class="step"><div class="n">2</div><h3>Папка со снимками</h3><p>Любое количество JPEG или PNG. Даты берутся из EXIF.</p></div>
     <div class="step"><div class="n">3</div><h3>Сборка</h3><p>Отбор лучших кадров, склейка дублей, вёрстка разворотов.</p></div>
     <div class="step"><div class="n">4</div><h3>Правка и печать</h3><p>Замена фото, раскладка, тексты — и PDF 300 dpi с вылетами.</p></div>
+  </div>
+</section>
+
+<!-- ============ 1b. мои альбомы ============ -->
+<section id="s-albums" hidden>
+  <div class="wrap albums">
+    <div class="head">
+      <h2>Мои альбомы</h2>
+      <p id="albNote"></p>
+    </div>
+    <div class="alb-grid" id="albGrid"></div>
   </div>
 </section>
 
@@ -279,6 +377,20 @@ h1,h2,h3{text-wrap:balance}
         </div>
         <p class="big-i">JPEG, PNG, WebP. Файлы HEIC с айфона браузер не открывает — их придётся сначала сохранить в JPEG.</p>
         <p class="note" id="dropCount">Пока ничего не выбрано</p>
+      </div>
+
+      <div class="up" id="uploader" hidden>
+        <div class="up-head">
+          <div><b id="upCount">0</b> <span id="upOf"></span></div>
+          <div class="up-actions">
+            <label class="btn ghost">Добавить ещё<input id="pickMore2" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label>
+            <label class="btn ghost">Другая папка<input id="pickDir2" type="file" webkitdirectory directory multiple hidden></label>
+            <button class="btn ghost" id="upClear">Очистить</button>
+          </div>
+        </div>
+        <div class="track"><i id="upBar"></i></div>
+        <div class="up-grid" id="upGrid"></div>
+        <p class="note" id="upSkip"></p>
       </div>
       <div class="f" style="margin-top:20px">
         <label>Главный герой — необязательно</label>
@@ -324,6 +436,14 @@ h1,h2,h3{text-wrap:balance}
 <!-- ============ 5. editor ============ -->
 <section id="s-editor" hidden>
   <header class="bar">
+    <button class="logo" id="logoHome2" title="На главную" style="margin-right:4px">
+      <svg viewBox="0 0 28 28" width="22" height="22" aria-hidden="true">
+        <rect x="2" y="5" width="11" height="18" rx="1.6" fill="currentColor" opacity=".22"></rect>
+        <rect x="15" y="5" width="11" height="18" rx="1.6" fill="currentColor" opacity=".22"></rect>
+        <rect x="4.6" y="8.2" width="5.8" height="5.8" rx="1.1" fill="currentColor"></rect>
+        <circle cx="20.5" cy="11.1" r="2.9" fill="currentColor"></circle>
+      </svg>
+    </button>
     <div class="brand" id="edBrand">Альбом <em></em></div>
     <button id="rebuild" class="btn ghost">Пересобрать</button>
     <label class="btn ghost">Добавить фото<input id="pickMore" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label>
@@ -337,6 +457,7 @@ h1,h2,h3{text-wrap:balance}
     </span>
     <button id="saveProj" class="btn ghost">Сохранить проект</button>
     <button id="print" class="btn primary">На печать · PDF</button>
+    <button class="acct" id="acctBtn2"><span class="av" id="acctAv2">?</span></button>
   </header>
   <main class="work">
     <nav class="rail" id="rail" aria-label="Страницы"></nav>
@@ -424,7 +545,7 @@ const OCCASIONS={
 const state={
   screen:"s-landing",
   title:"", sub:"", occasion:"birthday", style:"tihiy", fmt:"square", target:24,
-  files:[], photos:[], byId:new Map(), pages:[], cur:0, selSlot:-1, tab:"all"
+  files:[], photos:[], byId:new Map(), pages:[], cur:0, selSlot:-1, tab:"all", draftId:null
 };
 const S=()=>STYLES[state.style];
 const dims=()=>{const f=FORMATS[state.fmt];return{W:f.w,H:f.h,bleed:f.bleed};};
@@ -596,13 +717,15 @@ function drawRail(onlyCur){
 
 /* =============================== screens */
 function show(id){
-  ["s-landing","s-setup","s-upload","s-scan","s-editor"].forEach(x=>{ $(x).hidden=(x!==id); });
+  ["s-landing","s-albums","s-setup","s-upload","s-scan","s-editor"].forEach(x=>{ $(x).hidden=(x!==id); });
+  $("siteHeader").hidden = id==="s-editor";
+  if(id==="s-albums") albumsRender();
   state.screen=id;
   window.scrollTo(0,0);
   if(id==="s-editor"){ setTimeout(()=>render(),30); setTimeout(()=>render(),260); }
 }
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.go)));
-$("go-create").addEventListener("click",()=>show("s-setup"));
+$("go-create").addEventListener("click",()=>newAlbum());
 $("go-upload").addEventListener("click",()=>{
   state.title=$("a-title").value.trim()||"Альбом";
   state.sub=$("a-sub").value.trim();
@@ -645,21 +768,90 @@ Object.keys(STYLES).forEach(k=>{
 setTimeout(()=>{ [...$("styles").children].forEach(b=>{ try{ stylePreview(b.querySelector("canvas"),b.dataset.k); }catch(_){} }); },60);
 
 /* =============================== intake */
-function collect(list){
-  const imgs=[...list].filter(f=>/\.(jpe?g|png|webp)$/i.test(f.name));
-  const heic=[...list].filter(f=>/\.(heic|heif)$/i.test(f.name)).length;
-  state.files=imgs; state.heic=heic;
-  $("dropCount").textContent = imgs.length
-    ? "Выбрано снимков: "+imgs.length+(heic?" · пропущено HEIC: "+heic:"")
-    : (heic?"Только HEIC ("+heic+") — браузер их не открывает":"Подходящих изображений не нашлось");
-  $("go-scan").disabled=!imgs.length;
+let intakeBusy=false, skippedHeic=0, skippedBad=0, photoSeq=0;
+function upSkipText(){
+  const bits=[];
+  if(skippedHeic) bits.push("HEIC пропущено: "+skippedHeic+" — браузер такие файлы не открывает");
+  if(skippedBad) bits.push("не удалось прочитать: "+skippedBad);
+  $("upSkip").textContent=bits.join(" · ");
 }
-$("pickDir").addEventListener("change",e=>{collect(e.target.files);e.target.value="";});
-$("pickFiles").addEventListener("change",e=>{collect(e.target.files);e.target.value="";});
+function upTile(ph){
+  const fig=document.createElement("figure"); fig.dataset.id=ph.id;
+  const im=new Image(); im.src=ph.url; im.alt=ph.name;
+  im.title=ph.name+(ph.date?" · "+new Date(ph.date).toLocaleDateString("ru-RU"):"");
+  const b=document.createElement("button"); b.type="button"; b.textContent="✕"; b.title="Убрать из загрузки";
+  b.addEventListener("click",()=>{
+    const i=state.photos.findIndex(p=>p.id===ph.id);
+    if(i>=0){ state.photos.splice(i,1); state.byId.delete(ph.id); }
+    fig.remove(); upCounts();
+  });
+  fig.append(im,b);
+  $("upGrid").appendChild(fig);
+}
+function upCounts(){
+  const n=state.photos.length;
+  $("upCount").textContent=n;
+  $("upOf").textContent=n?(n===1?"снимок готов":n<5?"снимка готово":"снимков готово"):"снимков";
+  $("go-scan").disabled=intakeBusy||!n;
+  $("go-scan").textContent=intakeBusy?"Читаю файлы…":"Собрать альбом";
+  $("dropCount").textContent=n?"Можно добавить ещё — новые снимки встанут к уже прочитанным":"Пока ничего не выбрано";
+}
+async function intake(list){
+  const files=[...list].filter(f=>/\.(jpe?g|png|webp)$/i.test(f.name));
+  skippedHeic+=[...list].filter(f=>/\.(heic|heif)$/i.test(f.name)).length;
+  upSkipText();
+  if(!files.length){
+    if(skippedHeic) toast("В выборе только HEIC — сохраните их в JPEG");
+    else toast("Подходящих изображений не нашлось");
+    $("uploader").hidden=state.photos.length===0;
+    return;
+  }
+  $("uploader").hidden=false;
+  intakeBusy=true; upCounts();
+  const known=new Set(state.photos.map(p=>p.name+"|"+p.size));
+  let done=0;
+  for(const f of files){
+    if(known.has(f.name+"|"+f.size)){ done++; continue; }
+    try{
+      const head=await f.slice(0,262144).arrayBuffer();
+      const date=exifDate(f,head);
+      const bmp=await createImageBitmap(f,{imageOrientation:"from-image"});
+      const a=analyse(bmp);
+      const k=Math.min(1,1100/Math.max(bmp.width,bmp.height));
+      const cv=document.createElement("canvas");
+      cv.width=Math.max(1,Math.round(bmp.width*k)); cv.height=Math.max(1,Math.round(bmp.height*k));
+      cv.getContext("2d").drawImage(bmp,0,0,cv.width,cv.height);
+      if(bmp.close) bmp.close();
+      const blob=await new Promise(r=>cv.toBlob(r,"image/jpeg",0.72));
+      const url=URL.createObjectURL(blob);
+      const im=new Image(); im.src=url; await im.decode().catch(()=>{});
+      const ph={id:"p"+(photoSeq++),name:f.name,size:f.size,date,file:f,url,thumb:im,
+                score:a.score,hash:a.hash,dup:false,weak:false,noHero:false};
+      state.photos.push(ph); state.byId.set(ph.id,ph);
+      known.add(f.name+"|"+f.size);
+      upTile(ph);
+    }catch(_){ skippedBad++; upSkipText(); }
+    done++;
+    $("upBar").style.width=Math.round(done/files.length*100)+"%";
+    if(done%3===0){ upCounts(); await new Promise(r=>setTimeout(r,0)); }
+  }
+  intakeBusy=false; upCounts();
+  $("upBar").style.width="100%";
+}
+$("pickDir").addEventListener("change",e=>{const f=[...e.target.files];e.target.value="";intake(f);});
+$("pickFiles").addEventListener("change",e=>{const f=[...e.target.files];e.target.value="";intake(f);});
+$("pickDir2").addEventListener("change",e=>{const f=[...e.target.files];e.target.value="";intake(f);});
+$("pickMore2").addEventListener("change",e=>{const f=[...e.target.files];e.target.value="";intake(f);});
+$("upClear").addEventListener("click",()=>{
+  state.photos.forEach(p=>{ try{ URL.revokeObjectURL(p.url); }catch(_){} });
+  state.photos=[]; state.byId=new Map(); skippedHeic=0; skippedBad=0;
+  $("upGrid").innerHTML=""; $("upBar").style.width="0%"; $("uploader").hidden=true;
+  upSkipText(); upCounts();
+});
 const drop=$("drop");
 ["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("hot");}));
 ["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("hot");}));
-drop.addEventListener("drop",e=>{ if(e.dataTransfer&&e.dataTransfer.files.length) collect(e.dataTransfer.files); });
+drop.addEventListener("drop",e=>{ if(e.dataTransfer&&e.dataTransfer.files.length) intake(e.dataTransfer.files); });
 $("npages").addEventListener("change",e=>{
   state.target=Math.max(24,Math.min(80,+e.target.value||24));
   e.target.value=state.target; $("pgLabel").textContent=state.target;
@@ -934,31 +1126,10 @@ async function runScan(){
   show("s-scan");
   $("scanTitle").textContent="Собираю альбом";
   await sleep(50);
-  const files=state.files, photos=[];
-  phase("read");
-  for(let i=0;i<files.length;i++){
-    const f=files[i];
-    try{
-      const head=await f.slice(0,262144).arrayBuffer();
-      const date=exifDate(f,head);
-      const bmp=await createImageBitmap(f,{imageOrientation:"from-image"});
-      const a=analyse(bmp);
-      const k=Math.min(1,1100/Math.max(bmp.width,bmp.height));
-      const cw=Math.max(1,Math.round(bmp.width*k)), chh=Math.max(1,Math.round(bmp.height*k));
-      const cv=document.createElement("canvas"); cv.width=cw; cv.height=chh;
-      cv.getContext("2d").drawImage(bmp,0,0,cw,chh);
-      if(bmp.close) bmp.close();
-      const blob=await new Promise(r=>cv.toBlob(r,"image/jpeg",0.72));
-      const url=URL.createObjectURL(blob);
-      const im=new Image(); im.src=url; await im.decode().catch(()=>{});
-      photos.push({id:"p"+i,name:f.name,date,file:f,url,thumb:im,
-                   score:a.score,hash:a.hash,dup:false,weak:false});
-    }catch(_){}
-    bar(0.62*(i+1)/files.length);
-    if(i%4===0) await sleep(0);
-  }
-  phase("read",true);
-  if(!photos.length){ toast("Не удалось прочитать ни одного файла"); show("s-upload"); return; }
+  const photos=state.photos;
+  if(!photos.length){ toast("Сначала выберите снимки"); show("s-upload"); return; }
+  photos.forEach(p=>{ p.dup=false; p.weak=false; p.noHero=false; });
+  phase("read",true); bar(0.3);
 
   // --- duplicates
   phase("dupes");
@@ -975,7 +1146,7 @@ async function runScan(){
         if(loser===photos[i]) break;
       }
     }
-    bar(0.62+0.14*(i+1)/photos.length);
+    bar(0.3+0.4*(i+1)/photos.length);
     if(i%40===0) await sleep(0);
   }
   phase("dupes",true);
@@ -987,8 +1158,6 @@ async function runScan(){
   const floor=scores.length>12 ? scores[Math.floor(scores.length*0.12)] : -1;
   alive.forEach(p=>{ if(p.score<floor) p.weak=true; });
   bar(0.82); await sleep(180); phase("quality",true);
-
-  state.photos=photos; state.byId=new Map(photos.map(p=>[p.id,p]));
 
   // --- главный герой
   state.heroUsed=false;
@@ -1337,6 +1506,109 @@ $("pickMore").addEventListener("change",async e=>{
   trayRender(); toast("Добавлено снимков: "+files.length);
 });
 
+/* =============================== аккаунт, настройки, тариф */
+function profile(){ try{ return JSON.parse(localStorage.getItem("album:profile")||"null")||{name:"",email:""}; }
+  catch(_){ return {name:"",email:""}; } }
+function setProfile(p){ try{ localStorage.setItem("album:profile",JSON.stringify(p)); }catch(_){} acctPaint(); }
+function prefs(){ try{ return JSON.parse(localStorage.getItem("album:prefs")||"null")||{}; }catch(_){ return {}; } }
+function setPrefs(p){ try{ localStorage.setItem("album:prefs",JSON.stringify(p)); }catch(_){} }
+function initials(s){
+  const t=(s||"").trim(); if(!t) return "?";
+  const w=t.split(/[\s@._-]+/).filter(Boolean);
+  return ((w[0]||"?")[0]+(w[1]?w[1][0]:"")).toUpperCase();
+}
+function acctPaint(){
+  const p=profile(), ini=initials(p.name||p.email);
+  ["acctAv","acctAv2"].forEach(id=>{ if($(id)) $(id).textContent=ini; });
+  if($("acctName")) $("acctName").textContent=p.name||p.email||"Аккаунт";
+}
+function acctDialog(tab){
+  const p=profile(), pr=prefs(), ai=aiCfg()||{provider:"anthropic",model:"",key:""};
+  const el=document.createElement("div"); el.className="modal";
+  el.innerHTML='<div class="box">'+
+    '<h3>Аккаунт</h3>'+
+    '<div class="tabs" style="margin-bottom:16px">'+
+      '<button class="tab" data-t="profile">Профиль</button>'+
+      '<button class="tab" data-t="prefs">Настройки</button>'+
+      '<button class="tab" data-t="plan">Тариф</button>'+
+    '</div>'+
+
+    '<div class="pane" data-p="profile">'+
+      '<div class="f"><label for="acName">Имя</label><input id="acName" type="text" value="'+esc(p.name)+'" placeholder="Как вас зовут"></div>'+
+      '<div class="f"><label for="acMail">Почта</label><input id="acMail" type="text" value="'+esc(p.email)+'" placeholder="для будущих чеков и восстановления проектов"></div>'+
+      '<p class="note">Аккаунта на сервере пока нет: имя, почта, настройки и последняя вёрстка хранятся только в этом браузере. '+
+      'Когда появится вход, эти данные можно будет перенести.</p>'+
+    '</div>'+
+
+    '<div class="pane" data-p="prefs">'+
+      '<div class="f"><label for="acFmt">Формат по умолчанию</label><select id="acFmt">'+
+        '<option value="square">21×21 см</option><option value="a4">A4 альбомный</option><option value="a5">A5 альбомный</option></select></div>'+
+      '<div class="f"><label for="acStyle">Оформление по умолчанию</label><select id="acStyle">'+
+        Object.keys(STYLES).map(k=>'<option value="'+k+'">'+STYLES[k].name+'</option>').join("")+'</select></div>'+
+      '<div class="f"><label for="acPages">Страниц по умолчанию</label><input id="acPages" type="text" value="'+(pr.target||24)+'"></div>'+
+      '<div class="keybox"><div class="grid">'+
+        '<label for="acProv">ИИ для текстов</label><select id="acProv">'+
+          '<option value="anthropic">Anthropic (Claude)</option><option value="openai">OpenAI</option></select>'+
+        '<label for="acModel">Модель</label><input id="acModel" type="text" value="'+esc(ai.model||"")+'" placeholder="claude-sonnet-4-5">'+
+        '<label for="acKey">Ключ API</label><input id="acKey" type="password" value="'+esc(ai.key||"")+'" placeholder="sk-…">'+
+      '</div><p>Внутри Claude ключ не нужен — там текст пишет сам Claude. На своём домене ключ хранится в этом браузере '+
+      'и уходит напрямую в выбранный сервис.</p></div>'+
+    '</div>'+
+
+    '<div class="pane" data-p="plan">'+
+      '<div class="plans">'+
+        '<div class="plan cur"><h4>Бесплатно<span class="badge">сейчас</span></h4><div class="price">0 ₽</div>'+
+        '<ul><li>Любое число альбомов</li><li>PDF 300 dpi с вылетами</li><li>Снимки не покидают компьютер</li>'+
+        '<li>Тексты ИИ по своему ключу</li></ul></div>'+
+        '<div class="plan"><h4>Про<span class="badge">в планах</span></h4><div class="price">—</div>'+
+        '<ul><li>Проекты в облаке и на всех устройствах</li><li>Тексты ИИ без своего ключа</li>'+
+        '<li>Заказ печати из приложения</li><li>Совместная правка альбома</li></ul></div>'+
+      '</div>'+
+      '<p class="note">Оплата не подключена: сервер, на котором можно было бы что-то продавать, ещё не написан. '+
+      'Это честный список того, что появится, если проект пойдёт дальше.</p>'+
+    '</div>'+
+
+    '<div class="foot" style="margin-top:18px"><span class="note">Изменения сохраняются сразу</span>'+
+    '<button class="btn primary" id="acClose">Готово</button></div></div>';
+  document.body.appendChild(el);
+  const kill=()=>{ el.remove(); document.removeEventListener("keydown",k); };
+  const k=e=>{ if(e.key==="Escape") kill(); };
+  document.addEventListener("keydown",k);
+  el.addEventListener("click",e=>{ if(e.target===el) kill(); });
+  $("acClose").addEventListener("click",kill);
+  const openTab=t=>{
+    el.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+    el.querySelectorAll(".pane").forEach(x=>x.classList.toggle("on",x.dataset.p===t));
+  };
+  el.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>openTab(b.dataset.t)));
+  openTab(tab||"profile");
+  $("acFmt").value=pr.fmt||state.fmt;
+  $("acStyle").value=pr.style||state.style;
+  $("acProv").value=ai.provider||"anthropic";
+  const saveP=()=>setProfile({name:$("acName").value.trim(),email:$("acMail").value.trim()});
+  ["acName","acMail"].forEach(id=>$(id).addEventListener("input",saveP));
+  const savePrefs=()=>{
+    const t=Math.max(24,Math.min(80,parseInt($("acPages").value,10)||24));
+    $("acPages").value=t;
+    setPrefs({fmt:$("acFmt").value,style:$("acStyle").value,target:t});
+    state.fmt=$("acFmt").value; state.style=$("acStyle").value; state.target=t;
+    if($("fmt")) $("fmt").value=state.fmt;
+    if($("edFmt")) $("edFmt").value=state.fmt;
+    if($("edStyle")) $("edStyle").value=state.style;
+    if($("npages")) $("npages").value=t;
+    if($("pgLabel")) $("pgLabel").textContent=t;
+    [...$("styles").children].forEach(c=>c.classList.toggle("on",c.dataset.k===state.style));
+    if(state.pages.length){ $("rail").innerHTML=""; render(); updHead(); }
+  };
+  ["acFmt","acStyle","acPages"].forEach(id=>$(id).addEventListener("change",savePrefs));
+  const saveAi=()=>setAiCfg({provider:$("acProv").value,model:$("acModel").value.trim(),key:$("acKey").value.trim()});
+  ["acProv","acModel","acKey"].forEach(id=>$(id).addEventListener("change",saveAi));
+}
+$("acctBtn").addEventListener("click",()=>acctDialog("profile"));
+$("acctBtn2").addEventListener("click",()=>acctDialog("profile"));
+$("logoHome").addEventListener("click",()=>show("s-albums"));
+$("logoHome2").addEventListener("click",()=>show("s-albums"));
+
 /* =============================== режим просмотра (книга) */
 let reader=null;
 function spreads(){
@@ -1354,6 +1626,7 @@ function openReader(){
   const el=document.createElement("div"); el.className="reader";
   el.innerHTML='<div class="top"><button data-x="close">← В редактор</button>'+
     '<span class="t" id="rdTitle"></span><span style="flex:1"></span>'+
+    '<button data-x="edit">Править страницу</button>'+
     '<button data-x="ai">Текст с ИИ</button>'+
     '<button data-x="print">На печать · PDF</button></div>'+
     '<div class="book" id="rdBook"></div>'+
@@ -1362,6 +1635,11 @@ function openReader(){
   reader={el,sp,idx};
   el.querySelector('[data-x="close"]').addEventListener("click",closeReader);
   el.querySelector('[data-x="print"]').addEventListener("click",()=>{ exportPdf(); });
+  el.querySelector('[data-x="edit"]').addEventListener("click",()=>{
+    const pair=reader.sp[reader.idx];
+    state.cur=pair[pair.length-1];
+    closeReader(); inspector(); trayRender(); updHead(); render();
+  });
   el.querySelector('[data-x="ai"]').addEventListener("click",()=>{
     const pair=reader.sp[reader.idx];
     const here=pair.find(i=>state.pages[i].type==="text");
@@ -1375,11 +1653,6 @@ function openReader(){
   });
   el.querySelector('[data-x="prev"]').addEventListener("click",()=>step(-1));
   el.querySelector('[data-x="next"]').addEventListener("click",()=>step(1));
-  el.addEventListener("click",e=>{
-    if(e.target.id!=="rdBook") return;
-    const mid=e.currentTarget.clientWidth/2;
-    step(e.clientX<mid?-1:1);
-  });
   document.addEventListener("keydown",readerKeys);
   window.addEventListener("resize",drawReader);
   drawReader();
@@ -1415,9 +1688,17 @@ function drawReader(){
     cv.style.width=Math.round(W*s)+"px"; cv.style.height=Math.round(H*s)+"px";
     const c=cv.getContext("2d"); c.setTransform(dpr,0,0,dpr,0,0);
     drawPage(c,state.pages[i],s,ph=>ph.thumb);
-    cv.addEventListener("dblclick",()=>{ state.cur=i; closeReader(); inspector(); render(); updHead(); });
-    cv.title="Двойной щелчок — открыть эту страницу в редакторе";
     book.appendChild(cv);
+  });
+  // клик по левой половине — назад, по правой — вперёд
+  [["l",-1,"‹"],["r",1,"›"]].forEach(([cls,d,glyph])=>{
+    const z=document.createElement("button");
+    z.type="button"; z.className="zone "+cls;
+    z.innerHTML='<span aria-hidden="true">'+glyph+'</span>';
+    z.setAttribute("aria-label",d<0?"Предыдущий разворот":"Следующий разворот");
+    z.disabled = d<0 ? reader.idx===0 : reader.idx===reader.sp.length-1;
+    z.addEventListener("click",()=>step(d));
+    book.appendChild(z);
   });
   reader.el.querySelector("#rdTitle").textContent=state.title||"Альбом";
   reader.el.querySelector("#rdPos").textContent=
@@ -1547,7 +1828,86 @@ function applyProject(o){
   $("rail").innerHTML=""; inspector(); trayRender(); updHead(); render();
   return true;
 }
-function saveLocal(){ try{ localStorage.setItem("album:last",projectJson()); }catch(_){} }
+/* ---------- черновики альбомов ---------- */
+function drafts(){ try{ return JSON.parse(localStorage.getItem("album:drafts")||"[]")||[]; }catch(_){ return []; } }
+function draftsWrite(list){ try{ localStorage.setItem("album:drafts",JSON.stringify(list)); }catch(_){} }
+function draftCover(){
+  try{
+    if(!state.pages.length) return "";
+    const {W,H}=dims(), s=Math.min(1.2,230/W);
+    const cv=document.createElement("canvas");
+    cv.width=Math.round(W*s); cv.height=Math.round(H*s);
+    drawPage(cv.getContext("2d"),state.pages[0],s,ph=>ph.thumb);
+    return cv.toDataURL("image/jpeg",0.6);
+  }catch(_){ return ""; }
+}
+let saveT=null;
+function saveLocal(){
+  if(!state.pages.length) return;
+  clearTimeout(saveT);
+  saveT=setTimeout(()=>{
+    try{
+      const list=drafts();
+      if(!state.draftId) state.draftId="d"+Date.now().toString(36);
+      const rec={id:state.draftId,title:state.title||"Альбом",occasion:state.occasion,
+        style:state.style,fmt:state.fmt,pages:state.pages.length,updated:Date.now(),
+        cover:draftCover(),project:projectJson()};
+      const i=list.findIndex(d=>d.id===state.draftId);
+      if(i>=0) list[i]=rec; else list.unshift(rec);
+      draftsWrite(list.slice(0,40));
+    }catch(_){}
+  },1200);
+}
+function albumsRender(){
+  const list=drafts().sort((a,b)=>b.updated-a.updated), g=$("albGrid");
+  $("albNote").textContent=list.length
+    ? "Черновиков: "+list.length+". Снимки лежат только на вашем компьютере, поэтому при открытии нужно снова указать ту же папку."
+    : "Пока ни одного альбома";
+  g.innerHTML="";
+  const add=document.createElement("button");
+  add.className="alb-new"; add.type="button";
+  add.innerHTML='<span><b>+ Создать альбом</b><span style="font-size:12.5px">новая книга из папки со снимками</span></span>';
+  add.addEventListener("click",()=>newAlbum());
+  g.appendChild(add);
+  list.forEach(d=>{
+    const c=document.createElement("div"); c.className="alb";
+    const when=new Date(d.updated).toLocaleDateString("ru-RU",{day:"numeric",month:"long"});
+    const oc=(OCCASIONS[d.occasion]||{}).label||"";
+    c.innerHTML=(d.cover?'<img class="cov" src="'+d.cover+'" alt="">':'<div class="cov none">без обложки</div>')+
+      '<div class="meta"><b>'+esc(d.title)+'</b><span>'+d.pages+' стр. · '+esc(oc)+'</span>'+
+      '<span>правился '+when+'</span></div>'+
+      '<div class="acts"><button class="btn primary" data-a="open">Открыть</button>'+
+      '<button class="btn ghost" data-a="del" title="Удалить черновик">✕</button></div>';
+    c.querySelector('[data-a="open"]').addEventListener("click",()=>openDraft(d.id));
+    const cov=c.querySelector(".cov");
+    if(cov.tagName==="IMG") cov.addEventListener("click",()=>openDraft(d.id));
+    c.querySelector('[data-a="del"]').addEventListener("click",()=>{
+      draftsWrite(drafts().filter(x=>x.id!==d.id));
+      if(state.draftId===d.id) state.draftId=null;
+      albumsRender(); toast("Черновик удалён");
+    });
+    g.appendChild(c);
+  });
+}
+function newAlbum(){
+  state.draftId=null; state.pages=[]; state.cur=0; state.selSlot=-1;
+  $("a-title").value=""; $("a-sub").value="";
+  show("s-setup");
+}
+function openDraft(id){
+  const d=drafts().find(x=>x.id===id); if(!d) return;
+  state.draftId=d.id;
+  if(FORMATS[d.fmt]){ state.fmt=d.fmt; $("fmt").value=d.fmt; $("edFmt").value=d.fmt; }
+  if(STYLES[d.style]){ state.style=d.style; $("edStyle").value=d.style; }
+  if(OCCASIONS[d.occasion]) state.occasion=d.occasion;
+  state.title=d.title; $("a-title").value=d.title;
+  let obj=null; try{ obj=JSON.parse(d.project); }catch(_){}
+  if(!obj){ toast("Черновик повреждён"); return; }
+  if(state.photos.length && applyProject(obj)){ show("s-editor"); toast("Черновик открыт"); return; }
+  window.__pendingProject=obj;
+  show("s-upload");
+  toast("Укажите папку с теми же снимками — вёрстка восстановится");
+}
 $("saveProj").addEventListener("click",async()=>{
   try{ await saveBlob((state.title||"альбом")+" — проект.json",new Blob([projectJson()],{type:"application/json"}));
        toast("Проект сохранён"); }
@@ -1589,6 +1949,18 @@ assemble=function(){
   }
   _assemble();
 };
+// настройки из прошлого визита
+(function(){
+  const pr=prefs();
+  if(pr.fmt&&FORMATS[pr.fmt]){ state.fmt=pr.fmt; $("fmt").value=pr.fmt; $("edFmt").value=pr.fmt; }
+  if(pr.style&&STYLES[pr.style]){
+    state.style=pr.style; $("edStyle").value=pr.style;
+    [...$("styles").children].forEach(c=>c.classList.toggle("on",c.dataset.k===pr.style));
+  }
+  if(pr.target){ state.target=pr.target; $("npages").value=pr.target; $("pgLabel").textContent=pr.target; }
+})();
+acctPaint();
+upCounts();
 show("s-landing");
 })();
 </script>
